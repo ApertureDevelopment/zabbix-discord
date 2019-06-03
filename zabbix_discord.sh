@@ -1,16 +1,19 @@
 #!/bin/bash
 
 # Define variables
-discordsh_path="/discord.sh/discord.sh"
+discordsh_path="/var/discord/discord.sh"
 webhook_url=""
 monitor_url=""
 
 # Read variables from arguments
-acknowledgement=$1
-severity=$2
-status=$3
-title=$4
-message=$5
+json=$1
+title=$2
+
+# JSON
+acknowledgement=$(echo "$json" | jq -r '.ack')
+severity=$(echo "$json" | jq -r '.sev')
+status=$(echo "$json" | jq -r '.status')
+message=$(printf '%s' "$json" | jq '.msg')
 
 # Check if ack
 if [ "$acknowledgement" = "yes" ]; then
@@ -38,7 +41,7 @@ else
         footer="Disaster"
     else
         color="0xFFFFFF"
-        footer="-"
+        footer="none"
     fi
 
     # Check if status is problem or ok
@@ -47,11 +50,5 @@ else
     fi
 fi
 
-
-$discordsh_path --webhook-url=$webhook_url \
-  --title "$title" \
-  --description "$message" \
-  --color "$color" \
-  --url "$monitor_url" \
-  --footer "Severity: $footer" \
-  --timestamp
+message=$(printf '%s' "$message" | sed 's/"//g')
+$discordsh_path --webhook-url=$webhook_url --title "$title" --description "$message" --color $color --url $monitor_url --footer="Severity: $footer" --timestamp
